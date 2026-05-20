@@ -1,0 +1,48 @@
+{
+  "name": "Alert",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Alert title"
+    },
+    "message": {
+      "type": "string",
+      "description": "Alert message body"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "high_impact",
+        "price_alert",
+        "news",
+        "new_listing",
+        "whale_alert",
+        "system"
+      ],
+      "description": "Alert category"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false
+    },
+    "asset_tag": {
+      "type": "string",
+      "description": "Related asset"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "default": "medium"
+    }
+  },
+  "required": [
+    "title",
+    "message",
+    "type"
+  ]
+}

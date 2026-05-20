@@ -1,0 +1,44 @@
+import { useLocation, Link } from 'react-router-dom';
+import { Newspaper, PieChart, BookOpen, Bookmark, Bell } from 'lucide-react';
+
+const tabs = [
+  { path: '/', label: 'For You', icon: Newspaper },
+  { path: '/portfolio', label: 'Portfolio', icon: PieChart },
+  { path: '/journal', label: 'Journal', icon: BookOpen },
+  { path: '/saved', label: 'Saved', icon: Bookmark },
+  { path: '/alerts', label: 'Alerts', icon: Bell },
+];
+
+export default function BottomNav() {
+  const location = useLocation();
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-white/5">
+      <div className="max-w-lg mx-auto flex items-center justify-around py-2 px-2">
+        {tabs.map((tab) => {
+          const isActive = location.pathname === tab.path;
+          const Icon = tab.icon;
+          return (
+            <Link
+              key={tab.path}
+              to={tab.path}
+              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 ${
+                isActive
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground/70'
+              }`}
+            >
+              <div className={`relative ${isActive ? 'glow-purple-sm rounded-full' : ''}`}>
+                <Icon className={`w-5 h-5 transition-all duration-200 ${isActive ? 'scale-110' : ''}`} />
+              </div>
+              <span className={`text-[10px] font-medium ${isActive ? 'text-primary' : ''}`}>
+                {tab.label}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+      <div className="h-safe-area-inset-bottom" />
+    </nav>
+  );
+}

@@ -1,0 +1,28 @@
+{
+  "name": "PortfolioHolding",
+  "type": "object",
+  "properties": {
+    "asset_name": {
+      "type": "string",
+      "description": "Full name of the cryptocurrency"
+    },
+    "symbol": {
+      "type": "string",
+      "description": "Ticker symbol (e.g. BTC, ETH)"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Amount of the asset held"
+    },
+    "average_buy_price": {
+      "type": "number",
+      "description": "Average purchase price per unit in USD"
+    }
+  },
+  "required": [
+    "asset_name",
+    "symbol",
+    "amount",
+    "average_buy_price"
+  ]
+}

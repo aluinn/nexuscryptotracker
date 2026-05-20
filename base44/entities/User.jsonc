@@ -1,0 +1,26 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "selected_cryptos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User's selected cryptocurrency symbols"
+    },
+    "notification_preference": {
+      "type": "string",
+      "enum": [
+        "minimal",
+        "balanced",
+        "active"
+      ],
+      "default": "balanced"
+    },
+    "onboarding_completed": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "SavedArticle",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Article headline"
+    },
+    "source": {
+      "type": "string",
+      "description": "Source publication name"
+    },
+    "url": {
+      "type": "string",
+      "description": "Link to the original article"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Brief summary of the article"
+    },
+    "asset_tag": {
+      "type": "string",
+      "description": "Related cryptocurrency tag"
+    },
+    "collection": {
+      "type": "string",
+      "description": "Collection/folder name"
+    }
+  },
+  "required": [
+    "title",
+    "source"
+  ]
+}

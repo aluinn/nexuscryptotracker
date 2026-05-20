@@ -1,0 +1,55 @@
+{
+  "name": "JournalEntry",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "buy",
+        "sell",
+        "note",
+        "idea"
+      ],
+      "description": "Type of journal entry"
+    },
+    "asset": {
+      "type": "string",
+      "description": "Asset name or symbol"
+    },
+    "price": {
+      "type": "number",
+      "description": "Price at time of entry"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Amount traded"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the entry"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes",
+      "textarea": true
+    },
+    "thesis": {
+      "type": "string",
+      "description": "Investment thesis",
+      "textarea": true
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for categorization"
+    }
+  },
+  "required": [
+    "type",
+    "asset",
+    "date"
+  ]
+}

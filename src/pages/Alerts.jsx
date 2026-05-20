@@ -1,0 +1,69 @@
+import { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import AlertCard from '@/components/AlertCard';
+
+const tabs = ['All', 'Alerts', 'News', 'System'];
+
+export default function Alerts() {
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('All');
+
+  useEffect(() => {
+    loadAlerts();
+  }, []);
+
+  const loadAlerts = async () => {
+    setLoading(true);
+    const data = await base44.entities.Alert.list('-created_date', 50);
+    setAlerts(data);
+    setLoading(false);
+  };
+
+  const filtered = activeTab === 'All'
+    ? alerts
+    : activeTab === 'Alerts'
+    ? alerts.filter(a => ['high_impact', 'price_alert', 'whale_alert'].includes(a.type))
+    : activeTab === 'News'
+    ? alerts.filter(a => a.type === 'news' || a.type === 'new_listing')
+    : alerts.filter(a => a.type === 'system');
+
+  return (
+    <div className="px-4 pt-6 space-y-5">
+      <h1 className="text-xl font-bold text-foreground">Notifications</h1>
+
+      <div className="flex gap-2">
+        {tabs.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 rounded-xl text-xs font-medium transition-all ${
+              activeTab === tab
+                ? 'bg-primary/20 text-primary border border-primary/30'
+                : 'glass text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <div className="space-y-3">
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="glass rounded-2xl p-4 h-20 skeleton-shimmer" />
+          ))
+        ) : filtered.length > 0 ? (
+          filtered.map(alert => (
+            <AlertCard key={alert.id} alert={alert} />
+          ))
+        ) : (
+          <div className="text-center py-16 glass rounded-2xl">
+            <p className="text-sm text-muted-foreground">No notifications yet</p>
+            <p className="text-xs text-muted-foreground mt-1">You'll receive personalized alerts based on your assets</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
