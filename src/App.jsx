@@ -17,6 +17,7 @@ import Portfolio from './pages/Portfolio';
 import Journal from './pages/Journal';
 import Saved from './pages/Saved';
 import Alerts from './pages/Alerts';
+import Pricing from './pages/Pricing';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -56,6 +57,7 @@ const AuthenticatedApp = () => {
           <Route path="/journal" element={<Journal />} />
           <Route path="/saved" element={<Saved />} />
           <Route path="/alerts" element={<Alerts />} />
+          <Route path="/pricing" element={<Pricing />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />
