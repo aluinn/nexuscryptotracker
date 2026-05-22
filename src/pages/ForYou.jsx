@@ -33,35 +33,59 @@ export default function ForYou() {
     setSavedIds(new Set(saved.map(s => s.title)));
   };
 
-  // Map full crypto names to symbols for filtering
-  const categoryToSymbol = {
-    'Bitcoin': 'BTC', 'Ethereum': 'ETH', 'Solana': 'SOL', 'BNB': 'BNB',
-    'XRP': 'XRP', 'Cardano': 'ADA', 'Dogecoin': 'DOGE', 'Polkadot': 'DOT',
-    'Avalanche': 'AVAX', 'Chainlink': 'LINK', 'Litecoin': 'LTC',
-    'Polygon': 'MATIC', 'Uniswap': 'UNI', 'Cosmos': 'ATOM',
+  const RSS_SOURCES = [
+    { name: 'CoinDesk', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/' },
+    { name: 'Cointelegraph', url: 'https://cointelegraph.com/rss' },
+    { name: 'Decrypt', url: 'https://decrypt.co/feed' },
+    { name: 'The Block', url: 'https://www.theblock.co/rss.xml' },
+    { name: 'Bitcoin Magazine', url: 'https://bitcoinmagazine.com/.rss/full/' },
+  ];
+
+  const SYMBOL_KEYWORDS = {
+    BTC: ['bitcoin', 'btc'],
+    ETH: ['ethereum', 'eth', 'ether'],
+    SOL: ['solana', 'sol'],
+    BNB: ['bnb', 'binance'],
+    XRP: ['xrp', 'ripple'],
+    ADA: ['cardano', 'ada'],
+    DOGE: ['dogecoin', 'doge'],
+    AVAX: ['avalanche', 'avax'],
+    LINK: ['chainlink', 'link'],
+    MATIC: ['polygon', 'matic'],
+    DOT: ['polkadot', 'dot'],
+  };
+
+  const detectAssetTag = (text) => {
+    const lower = (text || '').toLowerCase();
+    for (const [symbol, keywords] of Object.entries(SYMBOL_KEYWORDS)) {
+      if (keywords.some(k => lower.includes(k))) return symbol;
+    }
+    return 'CRYPTO';
   };
 
   const fetchNews = async () => {
     setLoading(true);
-    const res = await fetch(
-      `https://min-api.cryptocompare.com/data/v2/news/?lang=EN&sortOrder=popular`
+    const results = await Promise.allSettled(
+      RSS_SOURCES.map(source =>
+        fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}&count=10`)
+          .then(r => r.json())
+          .then(data => (data.items || []).map(item => ({
+            title: item.title,
+            source: source.name,
+            summary: item.description?.replace(/<[^>]*>/g, '').slice(0, 160) + '…',
+            asset_tag: detectAssetTag(item.title + ' ' + item.description),
+            url: item.link,
+            time_ago: timeAgo(Math.floor(new Date(item.pubDate).getTime() / 1000)),
+            pubDate: new Date(item.pubDate).getTime(),
+          })))
+      )
     );
-    const data = await res.json();
-    const rawData = Array.isArray(data.Data) ? data.Data : [];
-    const mapped = rawData.slice(0, 30).map(item => {
-      const firstCat = item.categories?.split('|')[0] || '';
-      const symbol = categoryToSymbol[firstCat] || firstCat.toUpperCase().slice(0, 5);
-      return {
-        title: item.title,
-        source: item.source_info?.name || item.source,
-        summary: item.body?.slice(0, 160) + '…',
-        asset_tag: symbol,
-        url: item.url,
-        time_ago: timeAgo(item.published_on),
-        relevance: 'high',
-      };
-    });
-    setArticles(mapped);
+    const all = results
+      .filter(r => r.status === 'fulfilled')
+      .flatMap(r => r.value)
+      .sort((a, b) => b.pubDate - a.pubDate)
+      .slice(0, 40);
+    setArticles(all);
     setLoading(false);
   };
 
