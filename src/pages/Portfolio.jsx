@@ -6,6 +6,7 @@ import { base44 } from '@/api/base44Client';
 import AllocationChart from '@/components/AllocationChart';
 import AddHoldingDialog from '@/components/AddHoldingDialog';
 import { getCryptoColor } from '@/lib/cryptoData';
+import SwipeableHoldingCard from '@/components/SwipeableHoldingCard';
 
 const COINGECKO_IDS = {
   BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', BNB: 'binancecoin',
@@ -123,41 +124,16 @@ export default function Portfolio() {
           </div>
         ) : holdings.length > 0 ? (
           <div className="space-y-2">
-            {holdings.map(h => {
-              return (
-                <div
-                  key={h.id}
-                  className="glass rounded-2xl p-4 flex items-center justify-between"
-                  onClick={() => {}}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                      style={{ background: `linear-gradient(135deg, ${getCryptoColor(h.symbol)}, ${getCryptoColor(h.symbol)}88)` }}
-                    >
-                      {h.symbol}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{h.asset_name}</p>
-                      <p className="text-xs text-muted-foreground">{h.symbol}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-foreground">
-                      {currencyInfo.symbol}{(h.amount * getLivePrice(h.symbol)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                    <div className="flex items-center justify-end gap-1">
-                      <p className="text-xs text-muted-foreground">{h.amount} {h.symbol}</p>
-                      {getLivePrice(h.symbol) > 0 && (
-                        <span className={`text-[10px] font-medium ${get24hChange(h.symbol) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {get24hChange(h.symbol) >= 0 ? '+' : ''}{get24hChange(h.symbol).toFixed(2)}%
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {holdings.map(h => (
+              <SwipeableHoldingCard
+                key={h.id}
+                holding={h}
+                livePrice={getLivePrice(h.symbol)}
+                change24h={get24hChange(h.symbol)}
+                currencyInfo={currencyInfo}
+                onDelete={handleDelete}
+              />
+            ))}
           </div>
         ) : (
           <div className="text-center py-12 glass rounded-2xl">
