@@ -1,13 +1,23 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Settings } from 'lucide-react';
+import { TrendingUp, TrendingDown, RefreshCw, Settings } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import AllocationChart from '@/components/AllocationChart';
 import AddHoldingDialog from '@/components/AddHoldingDialog';
 import { getCryptoColor } from '@/lib/cryptoData';
 
+const COINGECKO_IDS = {
+  BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', BNB: 'binancecoin',
+  XRP: 'ripple', ADA: 'cardano', DOGE: 'dogecoin', AVAX: 'avalanche-2',
+  LINK: 'chainlink', MATIC: 'matic-network', DOT: 'polkadot', UNI: 'uniswap',
+  ATOM: 'cosmos', LTC: 'litecoin', SHIB: 'shiba-inu', TRX: 'tron',
+  TON: 'the-open-network', BCH: 'bitcoin-cash', NEAR: 'near', APT: 'aptos',
+};
+
 export default function Portfolio() {
   const [holdings, setHoldings] = useState([]);
+  const [prices, setPrices] = useState({});
   const [loading, setLoading] = useState(true);
+  const [pricesLoading, setPricesLoading] = useState(false);
 
   const loadHoldings = async () => {
     setLoading(true);
@@ -16,9 +26,33 @@ export default function Portfolio() {
     setLoading(false);
   };
 
-  useEffect(() => { loadHoldings(); }, []);
+  const fetchPrices = async (holdingsList) => {
+    if (!holdingsList.length) return;
+    setPricesLoading(true);
+    const ids = [...new Set(holdingsList.map(h => COINGECKO_IDS[h.symbol]).filter(Boolean))].join(',');
+    const res = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
+    );
+    const data = await res.json();
+    // Remap from coingecko id → symbol
+    const mapped = {};
+    for (const [sym, id] of Object.entries(COINGECKO_IDS)) {
+      if (data[id]) mapped[sym] = data[id];
+    }
+    setPrices(mapped);
+    setPricesLoading(false);
+  };
 
-  const totalValue = holdings.reduce((sum, h) => sum + h.amount * h.average_buy_price, 0);
+  useEffect(() => { loadHoldings(); }, []);
+  useEffect(() => { if (holdings.length) fetchPrices(holdings); }, [holdings]);
+
+  const getLivePrice = (symbol) => prices[symbol]?.usd || 0;
+  const get24hChange = (symbol) => prices[symbol]?.usd_24h_change || 0;
+  const totalValue = holdings.reduce((sum, h) => sum + h.amount * getLivePrice(h.symbol), 0);
+  const totalChange24h = holdings.reduce((sum, h) => {
+    const val = h.amount * getLivePrice(h.symbol);
+    return sum + val * (get24hChange(h.symbol) / 100);
+  }, 0);
 
   const handleDelete = async (id) => {
     await base44.entities.PortfolioHolding.delete(id);
@@ -35,13 +69,22 @@ export default function Portfolio() {
       </div>
 
       <div className="glass rounded-2xl p-5 glow-purple">
-        <p className="text-xs text-muted-foreground mb-1">Total Value</p>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-xs text-muted-foreground">Total Value (Live)</p>
+          <button onClick={() => fetchPrices(holdings)} disabled={pricesLoading} className="text-muted-foreground hover:text-foreground transition-colors">
+            <RefreshCw className={`w-3.5 h-3.5 ${pricesLoading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
         <h2 className="text-3xl font-bold text-foreground tracking-tight">
           ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </h2>
         <div className="flex items-center gap-1 mt-1">
-          <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="text-xs text-emerald-400 font-medium">Portfolio tracked at buy price</span>
+          {totalChange24h >= 0
+            ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+            : <TrendingDown className="w-3.5 h-3.5 text-red-400" />}
+          <span className={`text-xs font-medium ${totalChange24h >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            {totalChange24h >= 0 ? '+' : ''}${totalChange24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} today
+          </span>
         </div>
       </div>
 
@@ -73,7 +116,6 @@ export default function Portfolio() {
         ) : holdings.length > 0 ? (
           <div className="space-y-2">
             {holdings.map(h => {
-              const value = h.amount * h.average_buy_price;
               return (
                 <div
                   key={h.id}
@@ -94,9 +136,16 @@ export default function Portfolio() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-foreground">
-                      ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ${(h.amount * getLivePrice(h.symbol)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
-                    <p className="text-xs text-muted-foreground">{h.amount} {h.symbol}</p>
+                    <div className="flex items-center justify-end gap-1">
+                      <p className="text-xs text-muted-foreground">{h.amount} {h.symbol}</p>
+                      {getLivePrice(h.symbol) > 0 && (
+                        <span className={`text-[10px] font-medium ${get24hChange(h.symbol) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {get24hChange(h.symbol) >= 0 ? '+' : ''}{get24hChange(h.symbol).toFixed(2)}%
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

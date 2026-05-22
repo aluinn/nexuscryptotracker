@@ -12,23 +12,21 @@ export default function AddHoldingDialog({ onAdded }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [amount, setAmount] = useState('');
-  const [price, setPrice] = useState('');
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    if (!selected || !amount || !price) return;
+    if (!selected || !amount) return;
     setSaving(true);
     await base44.entities.PortfolioHolding.create({
       asset_name: selected.name,
       symbol: selected.symbol,
       amount: parseFloat(amount),
-      average_buy_price: parseFloat(price),
+      average_buy_price: 0,
     });
     setSaving(false);
     setOpen(false);
     setSelected(null);
     setAmount('');
-    setPrice('');
     onAdded?.();
   };
 
@@ -68,19 +66,9 @@ export default function AddHoldingDialog({ onAdded }) {
               className="bg-muted border-border/50 mt-1"
             />
           </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">Average Buy Price (USD)</Label>
-            <Input
-              type="number"
-              placeholder="0.00"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              className="bg-muted border-border/50 mt-1"
-            />
-          </div>
           <Button
             onClick={handleSave}
-            disabled={!selected || !amount || !price || saving}
+            disabled={!selected || !amount || saving}
             className="w-full bg-primary hover:bg-primary/90"
           >
             {saving ? 'Adding...' : 'Add to Portfolio'}
