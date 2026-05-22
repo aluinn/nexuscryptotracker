@@ -40,7 +40,8 @@ export default function ForYou() {
       `https://min-api.cryptocompare.com/data/v2/news/?lang=EN&categories=${categories}&sortOrder=popular`
     );
     const data = await res.json();
-    const mapped = (data.Data || []).slice(0, 20).map(item => ({
+    const rawData = Array.isArray(data.Data) ? data.Data : [];
+    const mapped = rawData.slice(0, 20).map(item => ({
       title: item.title,
       source: item.source_info?.name || item.source,
       summary: item.body?.slice(0, 160) + '…',
