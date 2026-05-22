@@ -20,6 +20,7 @@ export default function ForYou() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('top');
   const [savedIds, setSavedIds] = useState(new Set());
+  const [visibleCount, setVisibleCount] = useState(6);
 
   const cryptos = user?.selected_cryptos || ['BTC', 'ETH'];
 
@@ -39,6 +40,10 @@ export default function ForYou() {
     { name: 'Decrypt', url: 'https://decrypt.co/feed' },
     { name: 'The Block', url: 'https://www.theblock.co/rss.xml' },
     { name: 'Bitcoin Magazine', url: 'https://bitcoinmagazine.com/.rss/full/' },
+    { name: 'The Defiant', url: 'https://thedefiant.io/feed' },
+    { name: 'CryptoSlate', url: 'https://cryptoslate.com/feed/' },
+    { name: 'BeInCrypto', url: 'https://beincrypto.com/feed/' },
+    { name: 'CryptoBriefing', url: 'https://cryptobriefing.com/feed/' },
   ];
 
   const SYMBOL_KEYWORDS = {
@@ -84,7 +89,7 @@ export default function ForYou() {
       .filter(r => r.status === 'fulfilled')
       .flatMap(r => r.value)
       .sort((a, b) => b.pubDate - a.pubDate)
-      .slice(0, 40);
+      .slice(0, 80);
     setArticles(all);
     setLoading(false);
   };
@@ -104,6 +109,7 @@ export default function ForYou() {
   const filtered = activeFilter === 'all'
     ? articles
     : articles.filter(a => a.asset_tag === activeFilter);
+  const visible = filtered.slice(0, visibleCount);
 
   return (
     <div className="px-4 pt-6 space-y-5">
@@ -170,15 +176,25 @@ export default function ForYou() {
       <div className="space-y-3 pb-4">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
-        ) : filtered.length > 0 ? (
-          filtered.map((article, i) => (
-            <ArticleCard
-              key={i}
-              article={article}
-              onSave={handleSave}
-              isSaved={savedIds.has(article.title)}
-            />
-          ))
+        ) : visible.length > 0 ? (
+          <>
+            {visible.map((article, i) => (
+              <ArticleCard
+                key={i}
+                article={article}
+                onSave={handleSave}
+                isSaved={savedIds.has(article.title)}
+              />
+            ))}
+            {visibleCount < filtered.length && (
+              <button
+                onClick={() => setVisibleCount(v => v + 6)}
+                className="w-full py-3 rounded-2xl glass text-sm font-medium text-muted-foreground hover:text-foreground hover:border-white/10 transition-all"
+              >
+                Load more articles
+              </button>
+            )}
+          </>
         ) : (
           <div className="text-center py-12">
             <p className="text-sm text-muted-foreground">No articles found for this filter</p>
