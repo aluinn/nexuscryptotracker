@@ -30,8 +30,8 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-lg mx-auto pb-24">
+    <div className="h-dvh bg-background overflow-hidden flex flex-col">
+      <div className="flex-1 overflow-y-auto max-w-lg mx-auto w-full pb-4">
         <Outlet context={{ user }} />
       </div>
       <BottomNav />
