@@ -81,9 +81,11 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
+  html, body {
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
   }
 }
 

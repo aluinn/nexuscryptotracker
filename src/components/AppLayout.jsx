@@ -31,7 +31,7 @@ export default function AppLayout() {
 
   return (
     <div className="bg-background min-h-screen">
-      <div className="max-w-lg mx-auto w-full" style={{ paddingBottom: 'calc(80px + max(env(safe-area-inset-bottom), 8px))' }}>
+      <div className="max-w-lg mx-auto w-full" style={{ paddingBottom: 'calc(90px + max(env(safe-area-inset-bottom), 16px))' }}>
         <Outlet context={{ user }} />
       </div>
       <BottomNav />
