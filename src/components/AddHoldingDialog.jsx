@@ -1,32 +1,68 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { CRYPTO_LIST } from '@/lib/cryptoData';
+import { CURRENCIES, getDefaultCurrency, saveCurrency } from '@/lib/currencies';
 import CryptoChip from './CryptoChip';
+
+const COINGECKO_IDS = {
+  BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', BNB: 'binancecoin',
+  XRP: 'ripple', ADA: 'cardano', DOGE: 'dogecoin', AVAX: 'avalanche-2',
+  LINK: 'chainlink', MATIC: 'matic-network', DOT: 'polkadot', UNI: 'uniswap',
+  ATOM: 'cosmos', LTC: 'litecoin', AAVE: 'aave', ARB: 'arbitrum',
+  OP: 'optimism', NEAR: 'near', APT: 'aptos', SUI: 'sui', FIL: 'filecoin',
+};
 
 export default function AddHoldingDialog({ onAdded }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [amount, setAmount] = useState('');
+  const [fiatAmount, setFiatAmount] = useState('');
+  const [currency, setCurrency] = useState(getDefaultCurrency());
+  const [livePrice, setLivePrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  const currencyInfo = CURRENCIES.find(c => c.code === currency) || CURRENCIES[0];
+
+  useEffect(() => {
+    if (selected && open) fetchLivePrice(selected.symbol, currency);
+  }, [selected, currency, open]);
+
+  const fetchLivePrice = async (symbol, curr) => {
+    const id = COINGECKO_IDS[symbol];
+    if (!id) return;
+    setPriceLoading(true);
+    setLivePrice(null);
+    const res = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=${curr.toLowerCase()}`
+    );
+    const data = await res.json();
+    setLivePrice(data[id]?.[curr.toLowerCase()] || null);
+    setPriceLoading(false);
+  };
+
+  const cryptoAmount = livePrice && fiatAmount ? parseFloat(fiatAmount) / livePrice : null;
+
   const handleSave = async () => {
-    if (!selected || !amount) return;
+    if (!selected || !fiatAmount || !cryptoAmount) return;
     setSaving(true);
     await base44.entities.PortfolioHolding.create({
       asset_name: selected.name,
       symbol: selected.symbol,
-      amount: parseFloat(amount),
-      average_buy_price: 0,
+      amount: cryptoAmount,
+      average_buy_price: livePrice || 0,
+      fiat_paid: parseFloat(fiatAmount),
+      fiat_currency: currency,
     });
     setSaving(false);
     setOpen(false);
     setSelected(null);
-    setAmount('');
+    setFiatAmount('');
+    setLivePrice(null);
     onAdded?.();
   };
 
@@ -42,6 +78,8 @@ export default function AddHoldingDialog({ onAdded }) {
           <DialogTitle className="text-foreground">Add Holding</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
+
+          {/* Asset selector */}
           <div>
             <Label className="text-xs text-muted-foreground mb-2 block">Select Asset</Label>
             <div className="grid grid-cols-5 gap-3 max-h-48 overflow-y-auto">
@@ -56,22 +94,70 @@ export default function AddHoldingDialog({ onAdded }) {
               ))}
             </div>
           </div>
+
+          {/* Currency selector */}
           <div>
-            <Label className="text-xs text-muted-foreground">Amount</Label>
-            <Input
-              type="number"
-              placeholder="0.00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="bg-muted border-border/50 mt-1"
-            />
+            <Label className="text-xs text-muted-foreground mb-2 block">Currency</Label>
+            <select
+              value={currency}
+              onChange={(e) => { setCurrency(e.target.value); saveCurrency(e.target.value); }}
+              className="w-full bg-muted border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground"
+            >
+              {CURRENCIES.map(c => (
+                <option key={c.code} value={c.code}>{c.symbol} {c.code} — {c.name}</option>
+              ))}
+            </select>
           </div>
+
+          {/* Fiat amount input */}
+          <div>
+            <Label className="text-xs text-muted-foreground">Amount Paid ({currency})</Label>
+            <div className="relative mt-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
+                {currencyInfo.symbol}
+              </span>
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={fiatAmount}
+                onChange={(e) => setFiatAmount(e.target.value)}
+                className="bg-muted border-border/50 pl-8"
+              />
+            </div>
+          </div>
+
+          {/* Live price + conversion preview */}
+          {selected && (
+            <div className="glass rounded-xl p-3 space-y-1">
+              {priceLoading ? (
+                <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Fetching live price…
+                </div>
+              ) : livePrice ? (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    1 {selected.symbol} = {currencyInfo.symbol}{livePrice.toLocaleString(undefined, { maximumFractionDigits: 2 })} {currency}
+                  </p>
+                  {cryptoAmount && (
+                    <p className="text-sm font-semibold text-foreground">
+                      ≈ {cryptoAmount < 0.001
+                        ? cryptoAmount.toExponential(4)
+                        : cryptoAmount.toFixed(6)} {selected.symbol}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">Price unavailable for {selected.symbol}</p>
+              )}
+            </div>
+          )}
+
           <Button
             onClick={handleSave}
-            disabled={!selected || !amount || saving}
+            disabled={!selected || !fiatAmount || !cryptoAmount || saving}
             className="w-full bg-primary hover:bg-primary/90"
           >
-            {saving ? 'Adding...' : 'Add to Portfolio'}
+            {saving ? 'Adding…' : 'Add to Portfolio'}
           </Button>
         </div>
       </DialogContent>

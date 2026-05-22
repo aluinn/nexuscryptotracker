@@ -12,17 +12,24 @@
     },
     "amount": {
       "type": "number",
-      "description": "Amount of the asset held"
+      "description": "Amount of the asset held (calculated from fiat paid)"
     },
     "average_buy_price": {
       "type": "number",
-      "description": "Average purchase price per unit in USD"
+      "description": "Price per unit at time of purchase (in fiat_currency)"
+    },
+    "fiat_paid": {
+      "type": "number",
+      "description": "Amount of fiat currency paid"
+    },
+    "fiat_currency": {
+      "type": "string",
+      "description": "Currency code used to purchase (e.g. GBP, USD, EUR)"
     }
   },
   "required": [
     "asset_name",
     "symbol",
-    "amount",
-    "average_buy_price"
+    "amount"
   ]
 }

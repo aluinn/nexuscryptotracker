@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, RefreshCw, Settings } from 'lucide-react';
+import { TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
+import CurrencySettingsDialog from '@/components/CurrencySettingsDialog';
+import { getDefaultCurrency, getCurrencyInfo } from '@/lib/currencies';
 import { base44 } from '@/api/base44Client';
 import AllocationChart from '@/components/AllocationChart';
 import AddHoldingDialog from '@/components/AddHoldingDialog';
@@ -18,6 +20,8 @@ export default function Portfolio() {
   const [prices, setPrices] = useState({});
   const [loading, setLoading] = useState(true);
   const [pricesLoading, setPricesLoading] = useState(false);
+  const [currency, setCurrency] = useState(getDefaultCurrency());
+  const currencyInfo = getCurrencyInfo(currency);
 
   const loadHoldings = async () => {
     setLoading(true);
@@ -26,27 +30,33 @@ export default function Portfolio() {
     setLoading(false);
   };
 
-  const fetchPrices = async (holdingsList) => {
+  const fetchPrices = async (holdingsList, curr) => {
     if (!holdingsList.length) return;
     setPricesLoading(true);
+    const activeCurrency = (curr || currency).toLowerCase();
     const ids = [...new Set(holdingsList.map(h => COINGECKO_IDS[h.symbol]).filter(Boolean))].join(',');
     const res = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
+      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=${activeCurrency}&include_24hr_change=true`
     );
     const data = await res.json();
     // Remap from coingecko id → symbol
     const mapped = {};
     for (const [sym, id] of Object.entries(COINGECKO_IDS)) {
-      if (data[id]) mapped[sym] = data[id];
+      if (data[id]) mapped[sym] = { ...data[id], _currency: activeCurrency };
     }
     setPrices(mapped);
     setPricesLoading(false);
   };
 
-  useEffect(() => { loadHoldings(); }, []);
-  useEffect(() => { if (holdings.length) fetchPrices(holdings); }, [holdings]);
+  const handleCurrencyChange = (code) => {
+    setCurrency(code);
+    fetchPrices(holdings, code);
+  };
 
-  const getLivePrice = (symbol) => prices[symbol]?.usd || 0;
+  useEffect(() => { loadHoldings(); }, []);
+  useEffect(() => { if (holdings.length) fetchPrices(holdings, currency); }, [holdings]);
+
+  const getLivePrice = (symbol) => prices[symbol]?.[currency.toLowerCase()] || 0;
   const get24hChange = (symbol) => prices[symbol]?.usd_24h_change || 0;
   const totalValue = holdings.reduce((sum, h) => sum + h.amount * getLivePrice(h.symbol), 0);
   const totalChange24h = holdings.reduce((sum, h) => {
@@ -63,9 +73,7 @@ export default function Portfolio() {
     <div className="px-4 pt-6 space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-foreground">Portfolio</h1>
-        <button className="p-2 rounded-xl glass hover:border-white/10 transition-all">
-          <Settings className="w-4 h-4 text-muted-foreground" />
-        </button>
+        <CurrencySettingsDialog onChanged={handleCurrencyChange} />
       </div>
 
       <div className="glass rounded-2xl p-5 glow-purple">
@@ -76,14 +84,14 @@ export default function Portfolio() {
           </button>
         </div>
         <h2 className="text-3xl font-bold text-foreground tracking-tight">
-          ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {currencyInfo.symbol}{totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
         </h2>
         <div className="flex items-center gap-1 mt-1">
           {totalChange24h >= 0
             ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
             : <TrendingDown className="w-3.5 h-3.5 text-red-400" />}
           <span className={`text-xs font-medium ${totalChange24h >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-            {totalChange24h >= 0 ? '+' : ''}${totalChange24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} today
+            {totalChange24h >= 0 ? '+' : ''}{currencyInfo.symbol}{Math.abs(totalChange24h).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} today
           </span>
         </div>
       </div>
@@ -136,7 +144,7 @@ export default function Portfolio() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-foreground">
-                      ${(h.amount * getLivePrice(h.symbol)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {currencyInfo.symbol}{(h.amount * getLivePrice(h.symbol)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                     <div className="flex items-center justify-end gap-1">
                       <p className="text-xs text-muted-foreground">{h.amount} {h.symbol}</p>
