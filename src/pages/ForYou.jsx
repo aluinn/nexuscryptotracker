@@ -6,6 +6,13 @@ import ArticleCard from '@/components/ArticleCard';
 import CryptoChip from '@/components/CryptoChip';
 import SkeletonCard from '@/components/SkeletonCard';
 
+function timeAgo(timestamp) {
+  const diff = Math.floor((Date.now() / 1000) - timestamp);
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
 export default function ForYou() {
   const { user } = useOutletContext();
   const [articles, setArticles] = useState([]);
@@ -28,45 +35,21 @@ export default function ForYou() {
 
   const fetchNews = async () => {
     setLoading(true);
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `Find the latest important cryptocurrency news and articles relevant to these assets: ${cryptos.join(', ')}. 
-      
-Return 8-10 real, recent news articles from reputable sources like CoinDesk, The Block, Decrypt, Bloomberg, Reuters, CoinTelegraph, Messari, or Bankless. 
-
-For each article, provide:
-- title: the actual headline
-- source: the publication name
-- summary: a brief 1-2 sentence summary
-- asset_tag: the most relevant crypto ticker (BTC, ETH, SOL, etc.)
-- url: the actual URL to the article (must be a real, working URL)
-- time_ago: approximate time since publication (e.g. "2h ago", "5h ago", "1d ago")
-- relevance: "high" or "medium"
-
-Focus on market-moving stories, regulatory news, ecosystem developments, and macro events. Only include verified, factual news from reputable sources.`,
-      add_context_from_internet: true,
-      model: 'gemini_3_flash',
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          articles: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                title: { type: 'string' },
-                source: { type: 'string' },
-                summary: { type: 'string' },
-                asset_tag: { type: 'string' },
-                url: { type: 'string' },
-                time_ago: { type: 'string' },
-                relevance: { type: 'string' },
-              },
-            },
-          },
-        },
-      },
-    });
-    setArticles(result.articles || []);
+    const categories = cryptos.join(',');
+    const res = await fetch(
+      `https://min-api.cryptocompare.com/data/v2/news/?lang=EN&categories=${categories}&sortOrder=popular`
+    );
+    const data = await res.json();
+    const mapped = (data.Data || []).slice(0, 20).map(item => ({
+      title: item.title,
+      source: item.source_info?.name || item.source,
+      summary: item.body?.slice(0, 160) + '…',
+      asset_tag: item.categories?.split('|')[0] || '',
+      url: item.url,
+      time_ago: timeAgo(item.published_on),
+      relevance: 'high',
+    }));
+    setArticles(mapped);
     setLoading(false);
   };
 
