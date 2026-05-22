@@ -88,7 +88,7 @@ export default function ForYou() {
     const all = results
       .filter(r => r.status === 'fulfilled')
       .flatMap(r => r.value)
-      .sort((a, b) => b.pubDate - a.pubDate)
+      .sort(() => Math.random() - 0.5)
       .slice(0, 80);
     setArticles(all);
     setLoading(false);
