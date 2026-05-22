@@ -14,7 +14,7 @@ export default function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="glass border-t border-white/5 w-full flex-shrink-0">
+    <nav className="glass border-t border-white/5 w-full flex-shrink-0" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="max-w-lg mx-auto flex items-center justify-around py-2 px-1">
         <Link to="/pricing" className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all">
           <div className="flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-primary/20 border border-primary/30">
@@ -46,7 +46,7 @@ export default function BottomNav() {
           );
         })}
       </div>
-      <div className="h-safe-area-inset-bottom" />
+
     </nav>
   );
 }

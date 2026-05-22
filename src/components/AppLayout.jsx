@@ -30,7 +30,7 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="h-dvh bg-background overflow-hidden flex flex-col">
+    <div className="bg-background overflow-hidden flex flex-col" style={{ height: '100dvh' }}>
       <div className="flex-1 overflow-y-auto max-w-lg mx-auto w-full pb-4">
         <Outlet context={{ user }} />
       </div>
