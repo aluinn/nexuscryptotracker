@@ -33,23 +33,34 @@ export default function ForYou() {
     setSavedIds(new Set(saved.map(s => s.title)));
   };
 
+  // Map full crypto names to symbols for filtering
+  const categoryToSymbol = {
+    'Bitcoin': 'BTC', 'Ethereum': 'ETH', 'Solana': 'SOL', 'BNB': 'BNB',
+    'XRP': 'XRP', 'Cardano': 'ADA', 'Dogecoin': 'DOGE', 'Polkadot': 'DOT',
+    'Avalanche': 'AVAX', 'Chainlink': 'LINK', 'Litecoin': 'LTC',
+    'Polygon': 'MATIC', 'Uniswap': 'UNI', 'Cosmos': 'ATOM',
+  };
+
   const fetchNews = async () => {
     setLoading(true);
-    const categories = cryptos.join(',');
     const res = await fetch(
-      `https://min-api.cryptocompare.com/data/v2/news/?lang=EN&categories=${categories}&sortOrder=popular`
+      `https://min-api.cryptocompare.com/data/v2/news/?lang=EN&sortOrder=popular`
     );
     const data = await res.json();
     const rawData = Array.isArray(data.Data) ? data.Data : [];
-    const mapped = rawData.slice(0, 20).map(item => ({
-      title: item.title,
-      source: item.source_info?.name || item.source,
-      summary: item.body?.slice(0, 160) + '…',
-      asset_tag: item.categories?.split('|')[0] || '',
-      url: item.url,
-      time_ago: timeAgo(item.published_on),
-      relevance: 'high',
-    }));
+    const mapped = rawData.slice(0, 30).map(item => {
+      const firstCat = item.categories?.split('|')[0] || '';
+      const symbol = categoryToSymbol[firstCat] || firstCat.toUpperCase().slice(0, 5);
+      return {
+        title: item.title,
+        source: item.source_info?.name || item.source,
+        summary: item.body?.slice(0, 160) + '…',
+        asset_tag: symbol,
+        url: item.url,
+        time_ago: timeAgo(item.published_on),
+        relevance: 'high',
+      };
+    });
     setArticles(mapped);
     setLoading(false);
   };
