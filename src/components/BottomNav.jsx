@@ -14,7 +14,7 @@ export default function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="border-t border-white/5 w-full fixed bottom-0 left-0 right-0" style={{ zIndex: 9999, backgroundColor: 'hsl(222 47% 5% / 0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}>
+    <nav className="border-t border-white/5 w-full flex-shrink-0" style={{ backgroundColor: 'hsl(222 47% 5% / 0.98)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
       <div className="max-w-lg mx-auto flex items-center justify-around py-3.5 px-1">
         <Link to="/pricing" className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all">
           <div className="flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-primary/20 border border-primary/30">
