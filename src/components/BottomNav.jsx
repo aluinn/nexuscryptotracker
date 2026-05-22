@@ -34,10 +34,10 @@ export default function BottomNav() {
                 isActive
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground/70'
-              } ${tab.path === '/portfolio' ? 'scale-110' : ''}`}
+              }`}
             >
               <div className={`relative ${isActive ? 'glow-purple-sm rounded-full' : ''}`}>
-                <Icon className={`transition-all duration-200 ${tab.path === '/portfolio' ? 'w-6 h-6' : 'w-5 h-5'} ${isActive ? 'scale-110' : ''}`} />
+                <Icon className={`w-5 h-5 transition-all duration-200 ${isActive ? 'scale-110' : ''}`} />
               </div>
               <span className={`text-[10px] font-medium ${isActive ? 'text-primary' : ''}`}>
                 {tab.label}
