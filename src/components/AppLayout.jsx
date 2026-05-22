@@ -30,8 +30,8 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="bg-background flex flex-col" style={{ height: '100dvh', paddingTop: 'env(safe-area-inset-top)' }}>
-      <div className="flex-1 overflow-y-auto max-w-lg mx-auto w-full pb-4">
+    <div className="bg-background min-h-screen">
+      <div className="max-w-lg mx-auto w-full" style={{ paddingBottom: 'calc(80px + max(env(safe-area-inset-bottom), 8px))' }}>
         <Outlet context={{ user }} />
       </div>
       <BottomNav />
