@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Plus, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { CRYPTO_LIST } from '@/lib/cryptoData';
-import { CURRENCIES, getDefaultCurrency, saveCurrency } from '@/lib/currencies';
+import { CURRENCIES, getDefaultCurrency } from '@/lib/currencies';
 import CryptoChip from './CryptoChip';
 
 const COINGECKO_IDS = {
@@ -21,7 +21,7 @@ export default function AddHoldingDialog({ onAdded }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [fiatAmount, setFiatAmount] = useState('');
-  const [currency, setCurrency] = useState(getDefaultCurrency());
+  const [currency] = useState(getDefaultCurrency());
   const [livePrice, setLivePrice] = useState(null);
   const [priceLoading, setPriceLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -95,19 +95,7 @@ export default function AddHoldingDialog({ onAdded }) {
             </div>
           </div>
 
-          {/* Currency selector */}
-          <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">Currency</Label>
-            <select
-              value={currency}
-              onChange={(e) => { setCurrency(e.target.value); saveCurrency(e.target.value); }}
-              className="w-full bg-muted border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground"
-            >
-              {CURRENCIES.map(c => (
-                <option key={c.code} value={c.code}>{c.symbol} {c.code} — {c.name}</option>
-              ))}
-            </select>
-          </div>
+
 
           {/* Fiat amount input */}
           <div>
