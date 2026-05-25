@@ -50,14 +50,27 @@ export default function AddHoldingDialog({ onAdded }) {
   const handleSave = async () => {
     if (!selected || !fiatAmount || !cryptoAmount) return;
     setSaving(true);
-    await base44.entities.PortfolioHolding.create({
-      asset_name: selected.name,
-      symbol: selected.symbol,
-      amount: cryptoAmount,
-      average_buy_price: livePrice || 0,
-      fiat_paid: parseFloat(fiatAmount),
-      fiat_currency: currency,
-    });
+    const existing = await base44.entities.PortfolioHolding.filter({ symbol: selected.symbol });
+    if (existing.length > 0) {
+      const h = existing[0];
+      const newFiatPaid = (h.fiat_paid || 0) + parseFloat(fiatAmount);
+      const newAmount = (h.amount || 0) + cryptoAmount;
+      const newAvgPrice = newFiatPaid / newAmount;
+      await base44.entities.PortfolioHolding.update(h.id, {
+        amount: newAmount,
+        fiat_paid: newFiatPaid,
+        average_buy_price: newAvgPrice,
+      });
+    } else {
+      await base44.entities.PortfolioHolding.create({
+        asset_name: selected.name,
+        symbol: selected.symbol,
+        amount: cryptoAmount,
+        average_buy_price: livePrice || 0,
+        fiat_paid: parseFloat(fiatAmount),
+        fiat_currency: currency,
+      });
+    }
     setSaving(false);
     setOpen(false);
     setSelected(null);
