@@ -17,7 +17,7 @@ const COINGECKO_IDS = {
   OP: 'optimism', NEAR: 'near', APT: 'aptos', SUI: 'sui', FIL: 'filecoin',
 };
 
-export default function AddHoldingDialog({ onAdded }) {
+export default function AddHoldingDialog({ onAdded, portfolioName = 'My Portfolio' }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [fiatAmount, setFiatAmount] = useState('');
@@ -50,7 +50,7 @@ export default function AddHoldingDialog({ onAdded }) {
   const handleSave = async () => {
     if (!selected || !fiatAmount || !cryptoAmount) return;
     setSaving(true);
-    const existing = await base44.entities.PortfolioHolding.filter({ symbol: selected.symbol });
+    const existing = await base44.entities.PortfolioHolding.filter({ symbol: selected.symbol, portfolio_name: portfolioName });
     if (existing.length > 0) {
       const h = existing[0];
       const newFiatPaid = (h.fiat_paid || 0) + parseFloat(fiatAmount);
@@ -69,6 +69,7 @@ export default function AddHoldingDialog({ onAdded }) {
         average_buy_price: livePrice || 0,
         fiat_paid: parseFloat(fiatAmount),
         fiat_currency: currency,
+        portfolio_name: portfolioName,
       });
     }
     setSaving(false);

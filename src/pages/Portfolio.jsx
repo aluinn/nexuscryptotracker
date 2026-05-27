@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, RefreshCw, Plus, Lock, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import CurrencySettingsDialog from '@/components/CurrencySettingsDialog';
 import { getDefaultCurrency, getCurrencyInfo } from '@/lib/currencies';
 import { base44 } from '@/api/base44Client';
 import AllocationChart from '@/components/AllocationChart';
 import AddHoldingDialog from '@/components/AddHoldingDialog';
-import { getCryptoColor } from '@/lib/cryptoData';
 import SwipeableHoldingCard from '@/components/SwipeableHoldingCard';
 
 const COINGECKO_IDS = {
@@ -22,6 +22,10 @@ export default function Portfolio() {
   const [loading, setLoading] = useState(true);
   const [pricesLoading, setPricesLoading] = useState(false);
   const [currency, setCurrency] = useState(getDefaultCurrency());
+  const [user, setUser] = useState(null);
+  const [activePortfolio, setActivePortfolio] = useState('My Portfolio');
+  const [showNewInput, setShowNewInput] = useState(false);
+  const [newPortfolioName, setNewPortfolioName] = useState('');
   const currencyInfo = getCurrencyInfo(currency);
 
   const loadHoldings = async () => {
@@ -40,7 +44,6 @@ export default function Portfolio() {
       `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=${activeCurrency}&include_24hr_change=true`
     );
     const data = await res.json();
-    // Remap from coingecko id → symbol
     const mapped = {};
     for (const [sym, id] of Object.entries(COINGECKO_IDS)) {
       if (data[id]) mapped[sym] = { ...data[id], _currency: activeCurrency };
@@ -54,13 +57,34 @@ export default function Portfolio() {
     fetchPrices(holdings, code);
   };
 
-  useEffect(() => { loadHoldings(); }, []);
-  useEffect(() => { if (holdings.length) fetchPrices(holdings, currency); }, [holdings]);
+  useEffect(() => {
+    loadHoldings();
+    base44.auth.me().then(setUser);
+  }, []);
+
+  useEffect(() => {
+    if (holdings.length) fetchPrices(holdings, currency);
+  }, [holdings]);
+
+  const isPro = user?.plan === 'pro';
+
+  const portfolioNames = ['My Portfolio', ...new Set(
+    holdings.map(h => h.portfolio_name).filter(n => n && n !== 'My Portfolio')
+  )];
+
+  const handleAddPortfolio = () => {
+    if (!newPortfolioName.trim()) return;
+    setActivePortfolio(newPortfolioName.trim());
+    setNewPortfolioName('');
+    setShowNewInput(false);
+  };
+
+  const activeHoldings = holdings.filter(h => (h.portfolio_name || 'My Portfolio') === activePortfolio);
 
   const getLivePrice = (symbol) => prices[symbol]?.[currency.toLowerCase()] || 0;
   const get24hChange = (symbol) => prices[symbol]?.usd_24h_change || 0;
-  const totalValue = holdings.reduce((sum, h) => sum + h.amount * getLivePrice(h.symbol), 0);
-  const totalChange24h = holdings.reduce((sum, h) => {
+  const totalValue = activeHoldings.reduce((sum, h) => sum + h.amount * getLivePrice(h.symbol), 0);
+  const totalChange24h = activeHoldings.reduce((sum, h) => {
     const val = h.amount * getLivePrice(h.symbol);
     return sum + val * (get24hChange(h.symbol) / 100);
   }, 0);
@@ -75,6 +99,53 @@ export default function Portfolio() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-foreground">Portfolio</h1>
         <CurrencySettingsDialog onChanged={handleCurrencyChange} />
+      </div>
+
+      {/* Portfolio Switcher */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {portfolioNames.map(name => (
+          <button
+            key={name}
+            onClick={() => setActivePortfolio(name)}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              activePortfolio === name
+                ? 'bg-primary/20 text-primary border border-primary/30'
+                : 'glass text-muted-foreground'
+            }`}
+          >
+            {name}
+          </button>
+        ))}
+        {isPro ? (
+          showNewInput ? (
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <input
+                autoFocus
+                value={newPortfolioName}
+                onChange={e => setNewPortfolioName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddPortfolio()}
+                placeholder="Portfolio name"
+                className="px-2 py-1 rounded-lg text-xs bg-muted border border-border/50 text-foreground w-28 outline-none"
+              />
+              <button onClick={handleAddPortfolio} className="px-2 py-1 rounded-lg text-xs bg-primary text-white">Add</button>
+              <button onClick={() => setShowNewInput(false)} className="px-2 py-1 rounded-lg text-xs glass text-muted-foreground">✕</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowNewInput(true)}
+              className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium glass text-muted-foreground hover:text-foreground transition-all"
+            >
+              <Plus className="w-3 h-3" /> New
+            </button>
+          )
+        ) : (
+          <Link
+            to="/pricing"
+            className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium glass text-muted-foreground hover:text-primary transition-all"
+          >
+            <Lock className="w-3 h-3" /> Multiple <ChevronRight className="w-3 h-3" />
+          </Link>
+        )}
       </div>
 
       <div className="glass rounded-2xl p-5 glow-purple">
@@ -108,12 +179,12 @@ export default function Portfolio() {
         ))}
       </div>
 
-      <AllocationChart holdings={holdings} />
+      <AllocationChart holdings={activeHoldings} />
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-foreground">Holdings</h3>
-          <AddHoldingDialog onAdded={loadHoldings} />
+          <AddHoldingDialog onAdded={loadHoldings} portfolioName={activePortfolio} />
         </div>
 
         {loading ? (
@@ -122,9 +193,9 @@ export default function Portfolio() {
               <div key={i} className="glass rounded-2xl p-4 h-16 skeleton-shimmer" />
             ))}
           </div>
-        ) : holdings.length > 0 ? (
+        ) : activeHoldings.length > 0 ? (
           <div className="space-y-2">
-            {holdings.map(h => (
+            {activeHoldings.map(h => (
               <SwipeableHoldingCard
                 key={h.id}
                 holding={h}

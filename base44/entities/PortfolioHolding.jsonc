@@ -2,6 +2,11 @@
   "name": "PortfolioHolding",
   "type": "object",
   "properties": {
+    "portfolio_name": {
+      "type": "string",
+      "description": "Name of the portfolio this holding belongs to",
+      "default": "My Portfolio"
+    },
     "asset_name": {
       "type": "string",
       "description": "Full name of the cryptocurrency"
