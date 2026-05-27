@@ -3,8 +3,8 @@ import { Zap } from 'lucide-react';
 import { Newspaper, PieChart, BookOpen, Bookmark, Bell } from 'lucide-react';
 
 const tabs = [
-  { path: '/portfolio', label: 'Portfolio', icon: PieChart },
-  { path: '/', label: 'For You', icon: Newspaper },
+  { path: '/', label: 'Portfolio', icon: PieChart },
+  { path: '/for-you', label: 'For You', icon: Newspaper },
   { path: '/journal', label: 'Journal', icon: BookOpen },
   { path: '/saved', label: 'Saved', icon: Bookmark },
   { path: '/alerts', label: 'Alerts', icon: Bell },
