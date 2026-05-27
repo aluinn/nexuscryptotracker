@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Search, RefreshCw } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import ArticleCard from '@/components/ArticleCard';
+import { toast } from 'sonner';
 import CryptoChip from '@/components/CryptoChip';
 import SkeletonCard from '@/components/SkeletonCard';
 
@@ -94,8 +95,15 @@ export default function ForYou() {
     setLoading(false);
   };
 
+  const FREE_SAVE_LIMIT = 20;
+
   const handleSave = async (article) => {
     if (savedIds.has(article.title)) return;
+    const isPro = user?.plan === 'pro';
+    if (!isPro && savedIds.size >= FREE_SAVE_LIMIT) {
+      toast.error(`Free plan limit reached (${FREE_SAVE_LIMIT} articles). Upgrade to Pro for unlimited saves.`);
+      return;
+    }
     await base44.entities.SavedArticle.create({
       title: article.title,
       source: article.source,

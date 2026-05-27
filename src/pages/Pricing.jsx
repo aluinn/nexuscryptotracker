@@ -1,4 +1,7 @@
 import { Check, Zap, Star, Infinity, BookOpen, Bell, Bookmark, Smartphone, Headphones, LayoutDashboard, Download, RefreshCw, PieChart, Newspaper } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -7,7 +10,7 @@ const freeFeatures = [
   { icon: PieChart, label: 'Portfolio Tracker', desc: 'Track 1 portfolio manually', limit: '1 portfolio' },
   { icon: BookOpen, label: 'Trade Journal', desc: 'Log trades, notes and screenshots', limit: 'Unlimited' },
   { icon: Bell, label: 'Notifications', desc: 'Daily digest and essential updates', limit: true },
-  { icon: Bookmark, label: 'Saved Articles', desc: 'Save and organize your research', limit: 'Up to 50' },
+  { icon: Bookmark, label: 'Saved Articles', desc: 'Save and organize your research', limit: 'Up to 20' },
   { icon: Smartphone, label: 'Access', desc: 'Mobile and web access', limit: true },
   { icon: Headphones, label: 'Support', desc: 'Standard email support', limit: true },
 ];
@@ -55,6 +58,16 @@ function FeatureRow({ icon: Icon, label, desc, limit }) {
 }
 
 export default function Pricing() {
+  const [upgrading, setUpgrading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleUpgrade = async () => {
+    setUpgrading(true);
+    await base44.auth.updateMe({ plan: 'pro' });
+    setUpgrading(false);
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-2xl mx-auto px-4 pt-10 pb-6">
@@ -122,8 +135,8 @@ export default function Pricing() {
               <div>
                 {proFeatures.map((f) => <FeatureRow key={f.label} {...f} />)}
               </div>
-              <button className="mt-4 w-full py-3 rounded-xl bg-primary hover:bg-primary/90 transition-colors text-sm font-semibold text-white glow-purple-sm">
-                Start Pro Trial – 7 Days Free
+              <button onClick={handleUpgrade} disabled={upgrading} className="mt-4 w-full py-3 rounded-xl bg-primary hover:bg-primary/90 transition-colors text-sm font-semibold text-white glow-purple-sm disabled:opacity-60">
+                {upgrading ? 'Upgrading...' : 'Start Pro Trial – 7 Days Free'}
               </button>
             </div>
           </motion.div>

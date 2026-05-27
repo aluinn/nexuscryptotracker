@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Zap } from 'lucide-react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { base44 } from '@/api/base44Client';
@@ -7,12 +9,19 @@ import ArticleCard from '@/components/ArticleCard';
 export default function Saved() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('Articles');
 
   useEffect(() => {
+    base44.auth.me().then(setUser);
+  }, []);
+
+  useEffect(() => {
     loadSaved();
   }, []);
+
+  const FREE_SAVE_LIMIT = 20;
 
   const loadSaved = async () => {
     setLoading(true);
@@ -39,7 +48,18 @@ export default function Saved() {
 
   return (
     <div className="px-4 pt-6 space-y-5">
-      <h1 className="text-xl font-bold text-foreground">Saved</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-foreground">Saved</h1>
+        {user?.plan !== 'pro' && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{Math.min(articles.length, FREE_SAVE_LIMIT)}/{FREE_SAVE_LIMIT}</span>
+            <Link to="/pricing" className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/20 border border-primary/30 text-[10px] font-semibold text-primary">
+              <Zap className="w-2.5 h-2.5" />
+              Pro
+            </Link>
+          </div>
+        )}
+      </div>
 
       <div className="flex gap-4 border-b border-border/50">
         {['Articles', 'Collections'].map(tab => (

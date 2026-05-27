@@ -21,6 +21,18 @@
     "onboarding_completed": {
       "type": "boolean",
       "default": false
+    },
+    "plan": {
+      "type": "string",
+      "enum": [
+        "free",
+        "pro"
+      ],
+      "default": "free",
+      "description": "User's subscription plan"
     }
-  }
+  },
+  "required": [
+    "selected_cryptos"
+  ]
 }
