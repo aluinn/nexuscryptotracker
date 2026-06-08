@@ -31,8 +31,10 @@ export default function ForYou() {
   }, []);
 
   const loadSaved = async () => {
-    const saved = await base44.entities.SavedArticle.list();
-    setSavedIds(new Set(saved.map(s => s.title)));
+    try {
+      const saved = await base44.entities.SavedArticle.list();
+      setSavedIds(new Set(saved.map(s => s.title)));
+    } catch (e) { /* ignore */ }
   };
 
   const RSS_SOURCES = [
@@ -71,27 +73,29 @@ export default function ForYou() {
 
   const fetchNews = async () => {
     setLoading(true);
-    const results = await Promise.allSettled(
-      RSS_SOURCES.map(source =>
-        fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}&count=10`)
-          .then(r => r.json())
-          .then(data => (data.items || []).map(item => ({
-            title: item.title,
-            source: source.name,
-            summary: item.description?.replace(/<[^>]*>/g, '').slice(0, 160) + '…',
-            asset_tag: detectAssetTag(item.title + ' ' + item.description),
-            url: item.link,
-            time_ago: timeAgo(Math.floor(new Date(item.pubDate).getTime() / 1000)),
-            pubDate: new Date(item.pubDate).getTime(),
-          })))
-      )
-    );
-    const all = results
-      .filter(r => r.status === 'fulfilled')
-      .flatMap(r => r.value)
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 80);
-    setArticles(all);
+    try {
+      const results = await Promise.allSettled(
+        RSS_SOURCES.map(source =>
+          fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}&count=10`)
+            .then(r => r.json())
+            .then(data => (data.items || []).map(item => ({
+              title: item.title,
+              source: source.name,
+              summary: item.description?.replace(/<[^>]*>/g, '').slice(0, 160) + '…',
+              asset_tag: detectAssetTag(item.title + ' ' + item.description),
+              url: item.link,
+              time_ago: timeAgo(Math.floor(new Date(item.pubDate).getTime() / 1000)),
+              pubDate: new Date(item.pubDate).getTime(),
+            })))
+        )
+      );
+      const all = results
+        .filter(r => r.status === 'fulfilled')
+        .flatMap(r => r.value)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 80);
+      setArticles(all);
+    } catch (e) { /* ignore */ }
     setLoading(false);
   };
 

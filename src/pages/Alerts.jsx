@@ -16,10 +16,12 @@ export default function Alerts() {
   const handleRefresh = useCallback(async () => {
     if (refreshing) return;
     setRefreshing(true);
-    const user = await base44.auth.me();
-    const selected_cryptos = user?.selected_cryptos || ['BTC', 'ETH', 'SOL', 'BNB', 'XRP'];
-    await base44.functions.invoke('generateAlerts', { selected_cryptos });
-    await loadAlerts();
+    try {
+      const user = await base44.auth.me();
+      const selected_cryptos = user?.selected_cryptos || ['BTC', 'ETH', 'SOL', 'BNB', 'XRP'];
+      await base44.functions.invoke('generateAlerts', { selected_cryptos });
+      await loadAlerts();
+    } catch (e) { /* ignore */ }
     setRefreshing(false);
   }, [refreshing]);
 
@@ -42,18 +44,22 @@ export default function Alerts() {
 
   const initAlerts = async () => {
     setLoading(true);
-    const user = await base44.auth.me();
-    const selected_cryptos = user?.selected_cryptos || ['BTC', 'ETH', 'SOL', 'BNB', 'XRP'];
-    await base44.functions.invoke('generateAlerts', { selected_cryptos });
-    const data = await base44.entities.Alert.list('-created_date', 50);
-    setAlerts(data);
+    try {
+      const user = await base44.auth.me();
+      const selected_cryptos = user?.selected_cryptos || ['BTC', 'ETH', 'SOL', 'BNB', 'XRP'];
+      await base44.functions.invoke('generateAlerts', { selected_cryptos });
+      const data = await base44.entities.Alert.list('-created_date', 50);
+      setAlerts(data);
+    } catch (e) { /* ignore */ }
     setLoading(false);
   };
 
   const loadAlerts = async () => {
     setLoading(true);
-    const data = await base44.entities.Alert.list('-created_date', 50);
-    setAlerts(data);
+    try {
+      const data = await base44.entities.Alert.list('-created_date', 50);
+      setAlerts(data);
+    } catch (e) { /* ignore */ }
     setLoading(false);
   };
 
