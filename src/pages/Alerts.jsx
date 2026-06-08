@@ -16,6 +16,7 @@ export default function Alerts() {
   const handleRefresh = useCallback(async () => {
     if (refreshing) return;
     setRefreshing(true);
+    await base44.functions.invoke('generateAlerts', {});
     await loadAlerts();
     setRefreshing(false);
   }, [refreshing]);
@@ -34,8 +35,16 @@ export default function Alerts() {
   };
 
   useEffect(() => {
-    loadAlerts();
+    initAlerts();
   }, []);
+
+  const initAlerts = async () => {
+    setLoading(true);
+    await base44.functions.invoke('generateAlerts', {});
+    const data = await base44.entities.Alert.list('-created_date', 50);
+    setAlerts(data);
+    setLoading(false);
+  };
 
   const loadAlerts = async () => {
     setLoading(true);
