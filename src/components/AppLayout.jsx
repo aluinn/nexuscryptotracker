@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import BottomNav from './BottomNav';
+import DesktopSidebar from './DesktopSidebar';
 
 export default function AppLayout() {
   const [user, setUser] = useState(null);
@@ -30,13 +31,25 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="bg-background flex flex-col" style={{ height: '100dvh' }}>
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
-        <div className="max-w-lg mx-auto w-full">
-          <Outlet context={{ user }} />
+    <div className="bg-background flex" style={{ height: '100dvh' }}>
+      {/* Desktop sidebar — hidden on mobile */}
+      <DesktopSidebar />
+
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          {/* On mobile: constrain to phone width. On desktop: use full width with a generous max */}
+          <div className="w-full max-w-sm mx-auto md:max-w-3xl md:mx-0 md:px-8 md:py-2">
+            <Outlet context={{ user }} />
+          </div>
+        </div>
+
+        {/* Bottom nav — mobile only */}
+        <div className="md:hidden">
+          <BottomNav />
         </div>
       </div>
-      <BottomNav />
     </div>
   );
 }
