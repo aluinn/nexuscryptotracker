@@ -10,6 +10,7 @@ export default function SwipeableHoldingCard({ holding, livePrice, change24h, cu
 
   const THRESHOLD = 80;
 
+  // Touch handlers (mobile)
   const onTouchStart = (e) => {
     startX.current = e.touches[0].clientX;
     isDragging.current = true;
@@ -22,6 +23,30 @@ export default function SwipeableHoldingCard({ holding, livePrice, change24h, cu
   };
 
   const onTouchEnd = () => {
+    isDragging.current = false;
+    if (offsetX < -THRESHOLD) {
+      setOffsetX(-100);
+      setConfirming(true);
+    } else {
+      setOffsetX(0);
+      setConfirming(false);
+    }
+  };
+
+  // Mouse handlers (desktop)
+  const onMouseDown = (e) => {
+    startX.current = e.clientX;
+    isDragging.current = true;
+  };
+
+  const onMouseMove = (e) => {
+    if (!isDragging.current) return;
+    const delta = e.clientX - startX.current;
+    if (delta < 0) setOffsetX(Math.max(delta, -120));
+  };
+
+  const onMouseUp = () => {
+    if (!isDragging.current) return;
     isDragging.current = false;
     if (offsetX < -THRESHOLD) {
       setOffsetX(-100);
@@ -53,10 +78,14 @@ export default function SwipeableHoldingCard({ holding, livePrice, change24h, cu
       {/* Card */}
       <div
         className="glass rounded-2xl p-4 flex items-center justify-between relative transition-transform"
-        style={{ transform: `translateX(${offsetX}px)`, transition: isDragging.current ? 'none' : 'transform 0.2s ease' }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        style={{ transform: `translateX(${offsetX}px)`, transition: isDragging.current ? 'none' : 'transform 0.2s ease', userSelect: 'none', cursor: 'grab' }}
       >
         <div className="flex items-center gap-3">
           <div
