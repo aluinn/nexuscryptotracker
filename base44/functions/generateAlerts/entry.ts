@@ -20,13 +20,27 @@ Deno.serve(async (req) => {
     const selectedCryptos = body.selected_cryptos || ['BTC', 'ETH'];
     const cryptoList = selectedCryptos.join(', ');
 
-    // Generate fresh alerts from the web
+    // Generate alerts: top stories digest + portfolio-relevant price/whale alerts
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are a crypto push-notification system. Today is ${new Date().toISOString().split('T')[0]}.
-Search the web for the very latest news for these specific assets only: ${cryptoList}.
-Generate 5 short, punchy alerts — one per asset if possible.
-Each alert title must be under 8 words. Each message must be 1 sentence max (under 15 words).
-Focus on: price moves, major news, whale moves. Keep it brief like a phone notification.`,
+      prompt: `You are a crypto notification system. Today is ${new Date().toISOString().split('T')[0]}.
+Search the web for the very latest info on these assets: ${cryptoList}.
+
+Generate exactly 2 types of notifications:
+
+1. ONE "top_stories" notification:
+   - title: "Top Stories Today" (always this exact title)
+   - message: A single sentence summarising the 2-3 biggest things happening across ${cryptoList} right now.
+   - type: "top_stories"
+   - priority: "medium"
+
+2. THREE to FOUR "portfolio" notifications, one per asset if possible:
+   - title: under 8 words, asset name included
+   - message: 1 sentence about a notable price move, whale activity, or major event for that asset. Under 15 words.
+   - type: "portfolio"
+   - asset_tag: the symbol (e.g. BTC)
+   - priority: "high" if significant move, otherwise "medium"
+
+Return only these notifications, no news articles.`,
       add_context_from_internet: true,
       response_json_schema: {
         type: 'object',
@@ -38,7 +52,7 @@ Focus on: price moves, major news, whale moves. Keep it brief like a phone notif
               properties: {
                 title: { type: 'string' },
                 message: { type: 'string' },
-                type: { type: 'string', enum: ['high_impact', 'price_alert', 'news', 'new_listing', 'whale_alert', 'system'] },
+                type: { type: 'string', enum: ['top_stories', 'portfolio'] },
                 asset_tag: { type: 'string' },
                 priority: { type: 'string', enum: ['high', 'medium', 'low'] }
               }
@@ -61,7 +75,7 @@ Focus on: price moves, major news, whale moves. Keep it brief like a phone notif
       await base44.entities.Alert.create({
         title: alert.title,
         message: alert.message,
-        type: alert.type || 'news',
+        type: alert.type || 'portfolio',
         asset_tag: alert.asset_tag || '',
         priority: alert.priority || 'medium',
         is_read: false,

@@ -13,11 +13,8 @@
     "type": {
       "type": "string",
       "enum": [
-        "high_impact",
-        "price_alert",
-        "news",
-        "new_listing",
-        "whale_alert",
+        "top_stories",
+        "portfolio",
         "system"
       ],
       "description": "Alert category"

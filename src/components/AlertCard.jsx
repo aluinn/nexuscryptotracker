@@ -1,21 +1,29 @@
-import { Zap, TrendingUp, Globe, Bell, AlertCircle, Settings } from 'lucide-react';
+import { Newspaper, TrendingUp, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 
 const typeIcons = {
-  high_impact: { icon: Zap, color: '#EF4444' },
-  price_alert: { icon: TrendingUp, color: '#F59E0B' },
-  news: { icon: Globe, color: '#8B5CF6' },
-  new_listing: { icon: Bell, color: '#10B981' },
-  whale_alert: { icon: AlertCircle, color: '#3B82F6' },
+  top_stories: { icon: Newspaper, color: '#8B5CF6' },
+  portfolio: { icon: TrendingUp, color: '#F59E0B' },
   system: { icon: Settings, color: '#6B7280' },
+};
+
+const navTargets = {
+  top_stories: '/',
+  portfolio: '/portfolio',
 };
 
 export default function AlertCard({ alert }) {
   const config = typeIcons[alert.type] || typeIcons.system;
   const Icon = config.icon;
+  const navigate = useNavigate();
+  const target = navTargets[alert.type];
 
   return (
-    <div className={`glass rounded-2xl p-4 transition-all duration-200 ${alert.is_read ? 'opacity-60' : ''}`}>
+    <div
+      onClick={target ? () => navigate(target) : undefined}
+      className={`glass rounded-2xl p-4 transition-all duration-200 ${alert.is_read ? 'opacity-60' : ''} ${target ? 'cursor-pointer hover:border-white/10 active:scale-[0.99]' : ''}`}
+    >
       <div className="flex gap-3">
         <div
           className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
