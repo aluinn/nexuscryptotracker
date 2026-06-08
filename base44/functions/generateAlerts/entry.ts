@@ -16,12 +16,17 @@ Deno.serve(async (req) => {
       }
     }
 
+    const body = await req.json().catch(() => ({}));
+    const selectedCryptos = body.selected_cryptos || ['BTC', 'ETH'];
+    const cryptoList = selectedCryptos.join(', ');
+
     // Generate fresh alerts from the web
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are a crypto news alert system. Today is ${new Date().toISOString().split('T')[0]}.
-Search the web for the latest (today's) cryptocurrency news and generate 6 relevant alerts.
-Focus on: price movements, major news events, whale activity, new listings, regulatory news.
-Return a JSON array of alert objects.`,
+      prompt: `You are a crypto push-notification system. Today is ${new Date().toISOString().split('T')[0]}.
+Search the web for the very latest news for these specific assets only: ${cryptoList}.
+Generate 5 short, punchy alerts — one per asset if possible.
+Each alert title must be under 8 words. Each message must be 1 sentence max (under 15 words).
+Focus on: price moves, major news, whale moves. Keep it brief like a phone notification.`,
       add_context_from_internet: true,
       response_json_schema: {
         type: 'object',
