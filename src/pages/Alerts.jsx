@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import AlertCard from '@/components/AlertCard';
 import { RefreshCw } from 'lucide-react';
 
-const tabs = ['All', 'Alerts', 'News', 'System'];
+const tabs = ['All', 'Alerts', 'System'];
 
 export default function Alerts() {
   const [alerts, setAlerts] = useState([]);
@@ -61,8 +61,6 @@ export default function Alerts() {
     ? alerts
     : activeTab === 'Alerts'
     ? alerts.filter(a => ['high_impact', 'price_alert', 'whale_alert'].includes(a.type))
-    : activeTab === 'News'
-    ? alerts.filter(a => a.type === 'news' || a.type === 'new_listing')
     : alerts.filter(a => a.type === 'system');
 
   return (
