@@ -22,6 +22,8 @@ export default function ForYou() {
   const [activeTab, setActiveTab] = useState('top');
   const [savedIds, setSavedIds] = useState(new Set());
   const [visibleCount, setVisibleCount] = useState(6);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
 
   const cryptos = user?.selected_cryptos || ['BTC', 'ETH'];
 
@@ -118,9 +120,13 @@ export default function ForYou() {
     setSavedIds(prev => new Set([...prev, article.title]));
   };
 
-  const filtered = activeFilter === 'all'
-    ? articles
-    : articles.filter(a => a.asset_tag === activeFilter);
+  const filtered = articles
+    .filter(a => activeFilter === 'all' || a.asset_tag === activeFilter)
+    .filter(a => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return a.title?.toLowerCase().includes(q) || a.summary?.toLowerCase().includes(q) || a.source?.toLowerCase().includes(q);
+    });
   const visible = filtered.slice(0, visibleCount);
 
   return (
@@ -138,11 +144,28 @@ export default function ForYou() {
           >
             <RefreshCw className={`w-4 h-4 text-muted-foreground ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <button className="p-2 rounded-xl glass hover:border-white/10 transition-all">
-            <Search className="w-4 h-4 text-muted-foreground" />
+          <button
+            onClick={() => { setShowSearch(s => !s); if (showSearch) setSearchQuery(''); }}
+            className={`p-2 rounded-xl glass hover:border-white/10 transition-all ${showSearch ? 'text-primary' : ''}`}
+          >
+            <Search className={`w-4 h-4 ${showSearch ? 'text-primary' : 'text-muted-foreground'}`} />
           </button>
         </div>
       </div>
+
+      {showSearch && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            autoFocus
+            type="text"
+            placeholder="Search articles..."
+            value={searchQuery}
+            onChange={e => { setSearchQuery(e.target.value); setVisibleCount(6); }}
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 transition-colors"
+          />
+        </div>
+      )}
 
       <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-hide">
         <button
