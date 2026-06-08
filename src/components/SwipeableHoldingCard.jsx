@@ -5,26 +5,27 @@ import { getCryptoColor } from '@/lib/cryptoData';
 export default function SwipeableHoldingCard({ holding, livePrice, change24h, currencyInfo, onDelete }) {
   const [offsetX, setOffsetX] = useState(0);
   const [confirming, setConfirming] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const startX = useRef(null);
-  const isDragging = useRef(false);
 
   const THRESHOLD = 80;
 
-  // Touch handlers (mobile)
-  const onTouchStart = (e) => {
-    startX.current = e.touches[0].clientX;
-    isDragging.current = true;
+  const startDrag = (clientX) => {
+    startX.current = clientX;
+    setDragging(true);
   };
 
-  const onTouchMove = (e) => {
-    if (!isDragging.current) return;
-    const delta = e.touches[0].clientX - startX.current;
+  const moveDrag = (clientX) => {
+    if (startX.current === null) return;
+    const delta = clientX - startX.current;
     if (delta < 0) setOffsetX(Math.max(delta, -120));
   };
 
-  const onTouchEnd = () => {
-    isDragging.current = false;
-    if (offsetX < -THRESHOLD) {
+  const endDrag = (currentOffset) => {
+    if (startX.current === null) return;
+    startX.current = null;
+    setDragging(false);
+    if (currentOffset < -THRESHOLD) {
       setOffsetX(-100);
       setConfirming(true);
     } else {
@@ -33,37 +34,20 @@ export default function SwipeableHoldingCard({ holding, livePrice, change24h, cu
     }
   };
 
-  // Mouse handlers (desktop)
-  const onMouseDown = (e) => {
-    startX.current = e.clientX;
-    isDragging.current = true;
-  };
+  // Touch handlers
+  const onTouchStart = (e) => startDrag(e.touches[0].clientX);
+  const onTouchMove = (e) => moveDrag(e.touches[0].clientX);
+  const onTouchEnd = () => endDrag(offsetX);
 
-  const onMouseMove = (e) => {
-    if (!isDragging.current) return;
-    const delta = e.clientX - startX.current;
-    if (delta < 0) setOffsetX(Math.max(delta, -120));
-  };
-
-  const onMouseUp = () => {
-    if (!isDragging.current) return;
-    isDragging.current = false;
-    if (offsetX < -THRESHOLD) {
-      setOffsetX(-100);
-      setConfirming(true);
-    } else {
-      setOffsetX(0);
-      setConfirming(false);
-    }
-  };
+  // Mouse handlers
+  const onMouseDown = (e) => startDrag(e.clientX);
+  const onMouseMove = (e) => moveDrag(e.clientX);
+  const onMouseUp = () => endDrag(offsetX);
+  const onMouseLeave = () => { if (startX.current !== null) endDrag(offsetX); };
 
   const handleCancel = () => {
     setOffsetX(0);
     setConfirming(false);
-  };
-
-  const handleConfirmDelete = () => {
-    onDelete(holding.id);
   };
 
   const currentValue = holding.amount * livePrice;
@@ -77,15 +61,20 @@ export default function SwipeableHoldingCard({ holding, livePrice, change24h, cu
 
       {/* Card */}
       <div
-        className="glass rounded-2xl p-4 flex items-center justify-between relative transition-transform"
+        className="glass rounded-2xl p-4 flex items-center justify-between relative"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
-        onMouseLeave={onMouseUp}
-        style={{ transform: `translateX(${offsetX}px)`, transition: isDragging.current ? 'none' : 'transform 0.2s ease', userSelect: 'none', cursor: 'grab' }}
+        onMouseLeave={onMouseLeave}
+        style={{
+          transform: `translateX(${offsetX}px)`,
+          transition: dragging ? 'none' : 'transform 0.2s ease',
+          userSelect: 'none',
+          cursor: dragging ? 'grabbing' : 'grab',
+        }}
       >
         <div className="flex items-center gap-3">
           <div
@@ -126,7 +115,7 @@ export default function SwipeableHoldingCard({ holding, livePrice, change24h, cu
               Cancel
             </button>
             <button
-              onClick={handleConfirmDelete}
+              onClick={() => onDelete(holding.id)}
               className="px-3 py-1.5 rounded-xl text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-colors"
             >
               Delete
